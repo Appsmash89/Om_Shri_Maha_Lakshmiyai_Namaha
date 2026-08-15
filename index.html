@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-trade checklist</title>
+<style>
+  :root {
+    --bg: #0b0b0b;
+    --card: #161615;
+    --border: #2b2b29;
+    --border-strong: #3d3d3a;
+    --text-primary: #f3f2ee;
+    --text-secondary: #a8a69c;
+    --text-muted: #6f6d64;
+    --red: #e24b4a;
+    --red-dark: #791f1f;
+    --amber: #ef9f27;
+    --green: #639922;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px 80px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+  .sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+  }
+  .failing-card {
+    background: linear-gradient(180deg, #1a0f0f, #140c0c);
+    border: 1px solid var(--red-dark);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .failing-card h2 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--red);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  #failingText {
+    width: 100%;
+    min-height: 90px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    line-height: 1.7;
+  }
+  #failingText:focus { outline: none; }
+  .failing-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+  .rule-box {
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .rule-box .label {
+    font-size: 11px;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px;
+  }
+  .rule-box p { margin: 0; font-size: 14px; }
+  .section {
+    margin-bottom: 20px;
+  }
+  .section h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .item input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--red);
+    flex-shrink: 0;
+  }
+  .item span.checked {
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .metric-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .metric-card .k {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 0 0 4px;
+  }
+  .metric-card .v {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+  }
+  .footer-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 28px;
+  }
+  .reset-btn {
+    display: block;
+    margin: 20px auto 0;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .reset-btn:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pre-trade checklist</h1>
+  <p class="sub">Read start to finish. Every time. No exceptions for confidence, streak, or account size.</p>
+
+  <div class="failing-card">
+    <h2>Who you're failing</h2>
+    <textarea id="failingText" placeholder="Write here what you remember after the last blow-up. Read it before every trade."></textarea>
+    <div class="failing-hint">Autosaves as you type. This has to be read, not skimmed.</div>
+  </div>
+
+  <div class="rule-box">
+    <p class="label">Rule zero</p>
+    <p>If I already know I'm going to break a rule on this trade, I do not take the trade.</p>
+  </div>
+
+  <div class="section">
+    <h3>Top-down analysis — every trade, no shortcuts</h3>
+    <div class="item"><input type="checkbox" data-key="tf"><span>Weekly &rarr; daily &rarr; 4H &rarr; 1H &rarr; minutes, in that order</span></div>
+    <div class="item"><input type="checkbox" data-key="ema"><span>EMA trend</span></div>
+    <div class="item"><input type="checkbox" data-key="rsi"><span>RSI</span></div>
+    <div class="item"><input type="checkbox" data-key="vp"><span>Volume profile</span></div>
+    <div class="item"><input type="checkbox" data-key="liqmap"><span>Liquidation heatmap / levels</span></div>
+    <div class="item"><input type="checkbox" data-key="obdelta"><span>Orderbook liquidity delta chart</span></div>
+    <div class="item"><input type="checkbox" data-key="btcliqlive"><span>BTC liquidations live (Binance, 1M filter) &mdash; trend change signal</span></div>
+    <div class="item"><input type="checkbox" data-key="btcliqhist"><span>BTC liquidation history &mdash; trend change signal</span></div>
+    <div class="item"><input type="checkbox" data-key="btcpriceliq"><span>BTC price vs liquidation &mdash; trend change signal</span></div>
+    <div class="item"><input type="checkbox" data-key="5sec"><span>5-sec chart for volume visibility</span></div>
+    <div class="item"><input type="checkbox" data-key="obstatus"><span>Binance orderbook status</span></div>
+    <div class="item"><input type="checkbox" data-key="ff"><span>Forex Factory (news/events)</span></div>
+    <div class="item"><input type="checkbox" data-key="macro"><span>DXY / SP500 / Crude / Gold correlation</span></div>
+  </div>
+
+  <div class="section">
+    <h3>Setup validity</h3>
+    <div class="item"><input type="checkbox" data-key="curve"><span>Price built into the move with a logarithmic / exponential curve &mdash; each leg accelerating, not flat or choppy</span></div>
+    <div class="item"><input type="checkbox" data-key="notchase"><span>Not a sudden sharp move followed by flat consolidation &mdash; that's exhaustion, not entry</span></div>
+    <div class="item"><input type="checkbox" data-key="emadir"><span>Trade direction matches the major EMA trend</span></div>
+    <div class="item"><input type="checkbox" data-key="counter"><span>If counter-trend: only at low-volume-profile zones or high-volume exhaustion zones, and only after smaller EMAs confirm the new direction</span></div>
+  </div>
+
+  <div class="rule-box">
+    <p class="label">Stop loss &mdash; non-negotiable</p>
+    <p>The instant price moves in my favor, stop loss goes to break-even. If I haven't moved it, I exit the trade. There is no later.</p>
+  </div>
+
+  <div class="section">
+    <h3>Leverage &mdash; the 3 L's rule</h3>
+    <div class="two-col">
+      <div class="metric-card">
+        <p class="k">Default cap</p>
+        <p class="v">10x</p>
+      </div>
+      <div class="metric-card">
+        <p class="k">Max, full criteria only</p>
+        <p class="v">25x</p>
+      </div>
+    </div>
+    <p style="font-size:13px; color:var(--text-secondary); margin-top:10px;">Liquor, lady, leverage. The cap does not move for win streaks, account size, or confidence. Ever.</p>
+  </div>
+
+  <button class="reset-btn" id="resetBtn">Reset checkboxes</button>
+  <p class="footer-note">Two months of discipline is the whole plan. Nothing else.</p>
+</div>
+
+<script>
+(function() {
+  var checkboxes = document.querySelectorAll('.item input[type="checkbox"]');
+  var failingText = document.getElementById('failingText');
+  var resetBtn = document.getElementById('resetBtn');
+  var saveTimeout;
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem('checklist-state');
+      var state = raw ? JSON.parse(raw) : {};
+      checkboxes.forEach(function(cb) {
+        var key = cb.getAttribute('data-key');
+        if (state[key]) {
+          cb.checked = true;
+          cb.nextElementSibling.classList.add('checked');
+        }
+      });
+    } catch (e) {}
+
+    try {
+      var ft = localStorage.getItem('failing-text');
+      if (ft) failingText.value = ft;
+    } catch (e) {}
+  }
+
+  function saveState() {
+    var state = {};
+    checkboxes.forEach(function(cb) {
+      state[cb.getAttribute('data-key')] = cb.checked;
+    });
+    try { localStorage.setItem('checklist-state', JSON.stringify(state)); } catch (e) {}
+  }
+
+  checkboxes.forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      cb.nextElementSibling.classList.toggle('checked', cb.checked);
+      saveState();
+    });
+  });
+
+  failingText.addEventListener('input', function() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(function() {
+      try { localStorage.setItem('failing-text', failingText.value); } catch (e) {}
+    }, 400);
+  });
+
+  resetBtn.addEventListener('click', function() {
+    if (!confirm('Reset all checkboxes for this session?')) return;
+    checkboxes.forEach(function(cb) {
+      cb.checked = false;
+      cb.nextElementSibling.classList.remove('checked');
+    });
+    saveState();
+  });
+
+  loadState();
+})();
+</script>
+</body>
+</html>
