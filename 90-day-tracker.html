@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>90 Day Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F6; --panel:#FFFFFF; --ink:#1B2340; --muted:#66708F; --line:#D5DBE8;
+  --accent:#2F4BFF; --accent-ink:#FFFFFF; --cell:#F5F7FB;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A2E; --panel:#1C2440; --ink:#E8ECFA; --muted:#939CBD; --line:#2E3860;
+    --accent:#7C90FF; --accent-ink:#141A2E; --cell:#232D4D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A2E; --panel:#1C2440; --ink:#E8ECFA; --muted:#939CBD; --line:#2E3860;
+  --accent:#7C90FF; --accent-ink:#141A2E; --cell:#232D4D;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;line-height:1.5}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font-family:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;font-weight:800;font-size:clamp(2rem,7vw,3.2rem);margin:0;letter-spacing:-.02em;line-height:1.05}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.big{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:2.4rem;line-height:1}
+.big small{font-size:1rem;font-weight:500;color:var(--muted)}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.note{color:var(--muted);font-size:.9rem;margin:0 0 26px}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+.block.new{animation:pop .6s}
+@keyframes pop{from{outline:3px solid var(--accent);outline-offset:3px}to{outline:3px solid transparent;outline-offset:3px}}
+.bh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-weight:600}
+.bh span{color:var(--muted);font-weight:400;font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(10,1fr)}}
+.day{position:relative}
+.day input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%}
+.day span{display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:9px;background:var(--cell);border:1px solid var(--line);font-size:.85rem;font-weight:600;color:var(--muted);transition:background .15s,color .15s}
+.day input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day input:checked+span::after{content:"✓";margin-left:2px;font-size:.75rem}
+.day input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.day input:hover+span{border-color:var(--accent)}
+.foot{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.warn{border-color:#D6453D;color:#D6453D}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>90 Day Tracker</h1>
+    <div class="big"><span id="count">0</span> <small>days done</small></div>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+  <p class="note" id="note"></p>
+  <div id="blocks"></div>
+  <div class="foot"><button id="reset" class="warn">Reset all</button></div>
+</main>
+<script>
+(function(){
+  var KEY="tracker90:v1";
+  var state={done:{},total:90};
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){var s=JSON.parse(raw); if(s&&s.done&&s.total){state=s;}}
+  }catch(e){}
+
+  var blocksEl=document.getElementById("blocks");
+  var countEl=document.getElementById("count");
+  var fillEl=document.getElementById("fill");
+  var noteEl=document.getElementById("note");
+  var resetBtn=document.getElementById("reset");
+
+  function count(){return Object.keys(state.done).length;}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+  // Grow by 30 each time another 30 days are checked. Never shrinks.
+  function grow(){
+    var target=90+30*Math.floor(count()/30);
+    var grew=target>state.total;
+    if(grew)state.total=target;
+    return grew;
+  }
+
+  function render(newBlockIndex){
+    blocksEl.innerHTML="";
+    for(var b=0;b<state.total/30;b++){
+      var sec=document.createElement("section");
+      sec.className="block"+(b===newBlockIndex?" new":"");
+      var done=0,html="";
+      for(var d=b*30+1;d<=b*30+30;d++){
+        var on=!!state.done[d]; if(on)done++;
+        html+='<label class="day"><input type="checkbox" data-d="'+d+'"'+(on?" checked":"")+' aria-label="Day '+d+'"><span>'+d+'</span></label>';
+      }
+      sec.innerHTML='<div class="bh">Days '+(b*30+1)+'–'+(b*30+30)+'<span>'+done+' / 30</span></div><div class="grid">'+html+'</div>';
+      blocksEl.appendChild(sec);
+    }
+    var c=count();
+    countEl.textContent=c;
+    fillEl.style.width=Math.min(100,c/state.total*100)+"%";
+    var toNext=30-(c%30);
+    noteEl.textContent=c+" of "+state.total+" days checked. "+toNext+" more to unlock the next 30 days.";
+  }
+
+  blocksEl.addEventListener("change",function(e){
+    var t=e.target; if(!t.dataset.d)return;
+    if(t.checked)state.done[t.dataset.d]=true; else delete state.done[t.dataset.d];
+    var grew=grow();
+    save();
+    var y=window.scrollY;
+    render(grew?state.total/30-1:-1);
+    window.scrollTo(0,y);
+  });
+
+  var armed=false,timer;
+  resetBtn.addEventListener("click",function(){
+    if(!armed){armed=true;resetBtn.textContent="Tap again to erase everything";
+      timer=setTimeout(function(){armed=false;resetBtn.textContent="Reset all";},4000);return;}
+    clearTimeout(timer);armed=false;resetBtn.textContent="Reset all";
+    state={done:{},total:90};save();render(-1);
+  });
+
+  grow();render(-1);
+})();
+</script>
+</body>
+</html>
