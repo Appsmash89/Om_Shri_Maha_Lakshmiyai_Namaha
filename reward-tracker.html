@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reward Tracker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d232b'/%3E%3Crect x='6' y='6' width='20' height='20' rx='5' fill='%238fae9c'/%3E%3Cpath d='M11 16.5L14.5 20L21 12' stroke='%231d232b' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg: #171b21;
+    --panel: #1d232b;
+    --panel-alt: #212831;
+    --line: #2a323c;
+    --text: #e4e1d8;
+    --text-dim: #8b8f95;
+    --claimed-bg: #26312c;
+    --claimed-text: #5c6b62;
+    --claimed-text-strong: #6f8177;
+    --accent: #8fae9c;
+    --accent-soft: rgba(143,174,156,0.16);
+    --focus: #a7c4b3;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #3a424c var(--bg);
+  }
+
+  html::-webkit-scrollbar, body::-webkit-scrollbar{
+    width: 9px;
+  }
+  html::-webkit-scrollbar-track, body::-webkit-scrollbar-track{
+    background: var(--bg);
+  }
+  html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb{
+    background-color: #3a424c;
+    border-radius: 8px;
+  }
+
+  .wrap{
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 0 16px 24px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .top-fixed{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    padding-top: 28px;
+    padding-bottom: 4px;
+    flex-shrink: 0;
+  }
+
+  .head{
+    padding: 4px 6px 22px;
+  }
+
+  .head h1{
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .head p{
+    font-size: 13.5px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.5;
+    max-width: 54ch;
+  }
+
+  .table-shell{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.5s ease, border-color 0.5s ease;
+  }
+
+  .table-shell.pulse{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .table-scroll{
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #3a424c var(--panel);
+  }
+
+  .jump-controls{
+    display: flex;
+    gap: 7px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .jump-btn{
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+
+  .jump-btn:hover{
+    color: var(--text);
+    border-color: var(--accent);
+    background: var(--panel-alt);
+  }
+
+  .jump-btn:active{
+    transform: scale(0.94);
+  }
+
+  .jump-btn svg{
+    width: 15px;
+    height: 15px;
+  }
+
+  .table-scroll::-webkit-scrollbar{
+    width: 9px;
+  }
+  .table-scroll::-webkit-scrollbar-track{
+    background: var(--panel);
+  }
+  .table-scroll::-webkit-scrollbar-thumb{
+    background-color: #3a424c;
+    border-radius: 8px;
+    border: 2px solid var(--panel);
+  }
+  .table-scroll::-webkit-scrollbar-thumb:hover{
+    background-color: #4a5460;
+  }
+
+  .controls{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .field{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  .input-prefix{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-alt);
+    border: 1.4px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 10px;
+    transition: border-color 0.14s ease;
+  }
+
+  .input-prefix:focus-within{
+    border-color: var(--accent);
+  }
+
+  .input-prefix span{
+    font-size: 13.5px;
+    color: var(--text-dim);
+  }
+
+  .input-prefix input{
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+    width: 84px;
+    font-family: inherit;
+  }
+
+  .input-prefix input::-webkit-outer-spin-button,
+  .input-prefix input::-webkit-inner-spin-button{
+    opacity: 0.5;
+  }
+
+  .input-prefix.readout{
+    background: var(--accent-soft);
+    border-color: rgba(143,174,156,0.35);
+  }
+
+  .input-prefix.readout span:last-child{
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .apply{
+    background: var(--accent);
+    color: #171b21;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.14s ease, background 0.25s ease;
+    height: 38px;
+    min-width: 78px;
+  }
+
+  .apply:hover{ filter: brightness(1.08); }
+  .apply:active{ filter: brightness(0.95); }
+
+  .row-header, .row{
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr 1fr 56px;
+    align-items: center;
+  }
+
+  .row-header{
+    padding: 12px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-alt);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .row-header span:nth-child(n+2){
+    text-align: right;
+    padding-right: 10px;
+  }
+  .row-header span:first-child{ text-align: center; }
+  .row-header span:last-child{ text-align: center; padding-right: 0; }
+
+  .row{
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: background 0.16s ease;
+  }
+  .row:last-child{ border-bottom: none; }
+
+  .row:hover{ background: var(--panel-alt); }
+
+  .row.claimed{
+    background: var(--claimed-bg);
+  }
+  .row.claimed:hover{
+    background: var(--claimed-bg);
+  }
+
+  .cell{
+    padding: 13px 10px;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--text);
+    transition: color 0.16s ease;
+  }
+
+  .cell.year{
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .row.claimed .cell{
+    color: var(--claimed-text-strong);
+  }
+  .row.claimed .cell.year{
+    color: var(--claimed-text);
+  }
+
+  .cell.balance{
+    font-weight: 600;
+  }
+  .row.claimed .cell.balance{
+    font-weight: 500;
+  }
+
+  .check-col{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 8px 0;
+  }
+
+  .box{
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    border: 1.6px solid #454e59;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.16s ease;
+    pointer-events: none;
+  }
+
+  .row.claimed .box{
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .box svg{
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.14s ease;
+  }
+  .row.claimed .box svg{
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .row:focus-visible{
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
+  .status{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 16px 4px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .status strong{
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .reset{
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 4px 0;
+    text-decoration: underline;
+    text-decoration-color: #3a424c;
+  }
+  .reset:hover{ color: var(--text); }
+
+  @media (max-width: 480px){
+    .row-header, .row{
+      grid-template-columns: 36px 1fr 1fr 1fr 48px;
+    }
+    .cell{ padding: 12px 6px; font-size: 13.5px; }
+    .box{ width: 22px; height: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top-fixed">
+    <div class="head">
+      <h1>Reward schedule</h1>
+      <p>Tap anywhere on a row once your cumulative reward reaches that balance. Everything from year 0 up through your tap gets marked claimed and fades back, so your eye lands on what's next.</p>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label for="initialInput">Initial amount</label>
+        <div class="input-prefix">
+          <span>$</span>
+          <input type="number" id="initialInput" min="0" step="0.01" value="23">
+        </div>
+      </div>
+      <div class="field">
+        <label for="rateInput">Interest rate</label>
+        <div class="input-prefix">
+          <input type="number" id="rateInput" min="0" step="0.1" value="20">
+          <span>%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="yearsInput">Years</label>
+        <div class="input-prefix">
+          <input type="number" id="yearsInput" min="1" max="80" step="1" value="41">
+        </div>
+      </div>
+      <button id="applyBtn" class="apply">Apply</button>
+
+      <div class="field">
+        <label>Final balance</label>
+        <div class="input-prefix readout">
+          <span>$</span>
+          <span id="finalBalance">—</span>
+        </div>
+      </div>
+
+      <div class="jump-controls">
+        <button class="jump-btn" id="jumpTop" title="Jump to top" aria-label="Jump to top">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 15L12 9L18 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="jump-btn" id="jumpBottom" title="Jump to bottom" aria-label="Jump to bottom">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-shell">
+    <div class="table-scroll">
+      <div class="row-header">
+        <span>Yr</span>
+        <span>Interest</span>
+        <span>Accrued</span>
+        <span>Balance</span>
+        <span>✓</span>
+      </div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+  <div class="status">
+    <span id="statusText">Loading your progress…</span>
+    <button class="reset" id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<script>
+  function formatMoney(n){
+    return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function buildSchedule(initial, ratePct, years){
+    const rate = ratePct / 100;
+    const rows = [[0, "–", "–", formatMoney(initial)]];
+    let balance = initial;
+    let accrued = 0;
+    for(let y = 1; y <= years; y++){
+      const interest = balance * rate;
+      accrued += interest;
+      balance += interest;
+      rows.push([y, formatMoney(interest), formatMoney(accrued), formatMoney(balance)]);
+    }
+    return rows;
+  }
+
+  let settings = { initial: 23, rate: 20, years: 41 };
+  let data = buildSchedule(settings.initial, settings.rate, settings.years);
+
+  function updateFinalBalance(){
+    const finalBalanceEl = document.getElementById("finalBalance");
+    if(finalBalanceEl && data.length){
+      finalBalanceEl.textContent = data[data.length - 1][3];
+    }
+  }
+
+  const STORAGE_KEY = "reward-tracker:claimed-up-to";
+  const SETTINGS_KEY = "reward-tracker:settings";
+
+  const rowsEl = document.getElementById("rows");
+  const statusEl = document.getElementById("statusText");
+  const resetBtn = document.getElementById("resetBtn");
+  const initialInput = document.getElementById("initialInput");
+  const rateInput = document.getElementById("rateInput");
+  const yearsInput = document.getElementById("yearsInput");
+  const applyBtn = document.getElementById("applyBtn");
+
+  let claimedUpTo = -1; // index into data, -1 = none claimed
+
+  // Use window.storage when this is running inside the Claude artifact
+  // sandbox; otherwise fall back to the browser's own localStorage so a
+  // standalone/downloaded copy of this file still remembers your progress.
+  const hasBridgeStorage = typeof window.storage !== "undefined"
+    && typeof window.storage.get === "function";
+
+  async function loadState(){
+    try{
+      if(hasBridgeStorage){
+        const result = await window.storage.get(SETTINGS_KEY);
+        if(result && typeof result.value !== "undefined"){
+          const parsed = JSON.parse(result.value);
+          if(parsed && typeof parsed.initial === "number") settings = parsed;
+        }
+      } else {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if(raw !== null){
+          const parsed = JSON.parse(raw);
+          if(parsed && typeof parsed.initial === "number") settings = parsed;
+        }
+      }
+    } catch(err){
+      // no saved settings — use defaults
+    }
+
+    initialInput.value = settings.initial;
+    rateInput.value = settings.rate;
+    yearsInput.value = settings.years;
+    data = buildSchedule(settings.initial, settings.rate, settings.years);
+    updateFinalBalance();
+
+    try{
+      if(hasBridgeStorage){
+        const result = await window.storage.get(STORAGE_KEY);
+        if(result && typeof result.value !== "undefined"){
+          const parsed = parseInt(result.value, 10);
+          if(!isNaN(parsed)) claimedUpTo = parsed;
+        }
+      } else {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw !== null){
+          const parsed = parseInt(raw, 10);
+          if(!isNaN(parsed)) claimedUpTo = parsed;
+        }
+      }
+    } catch(err){
+      // no saved state yet, or storage unavailable — start fresh
+      claimedUpTo = -1;
+    }
+    render();
+  }
+
+  async function saveState(){
+    try{
+      if(hasBridgeStorage){
+        await window.storage.set(STORAGE_KEY, String(claimedUpTo));
+      } else {
+        localStorage.setItem(STORAGE_KEY, String(claimedUpTo));
+      }
+    } catch(err){
+      console.error("Could not save progress:", err);
+    }
+  }
+
+  async function saveSettings(){
+    try{
+      const payload = JSON.stringify(settings);
+      if(hasBridgeStorage){
+        await window.storage.set(SETTINGS_KEY, payload);
+      } else {
+        localStorage.setItem(SETTINGS_KEY, payload);
+      }
+    } catch(err){
+      console.error("Could not save settings:", err);
+    }
+  }
+
+  const checkSvg = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 12.5L9.5 18L20 6" stroke="#171b21" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+
+  function render(){
+    rowsEl.innerHTML = "";
+    data.forEach((r, i) => {
+      const [year, interest, accrued, balance] = r;
+      const claimed = i <= claimedUpTo && i !== 0 ? true : (i === 0 ? claimedUpTo >= 0 : false);
+      const row = document.createElement("div");
+      row.className = "row" + (claimed ? " claimed" : "");
+      row.tabIndex = 0;
+      row.setAttribute("role", "checkbox");
+      row.setAttribute("aria-checked", claimed);
+      row.innerHTML = `
+        <div class="cell year">${year}</div>
+        <div class="cell">${interest}</div>
+        <div class="cell">${accrued}</div>
+        <div class="cell balance">$${balance}</div>
+        <div class="check-col"><div class="box">${checkSvg}</div></div>
+      `;
+      if(i !== 0){
+        row.addEventListener("click", () => toggle(i));
+        row.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(i); }
+        });
+      }
+      rowsEl.appendChild(row);
+    });
+    updateStatus();
+  }
+
+  function toggle(i){
+    claimedUpTo = (claimedUpTo === i) ? 0 : i;
+    if(claimedUpTo === 0) claimedUpTo = -1;
+    render();
+    saveState();
+  }
+
+  function updateStatus(){
+    if(claimedUpTo < 0){
+      statusEl.innerHTML = "Nothing claimed yet";
+    } else {
+      const bal = data[claimedUpTo][3];
+      statusEl.innerHTML = `Claimed through year <strong>${claimedUpTo}</strong> — $${bal}`;
+    }
+  }
+
+  const tableScroll = document.querySelector(".table-scroll");
+  const jumpTop = document.getElementById("jumpTop");
+  const jumpBottom = document.getElementById("jumpBottom");
+
+  jumpTop.addEventListener("click", () => {
+    tableScroll.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  jumpBottom.addEventListener("click", () => {
+    tableScroll.scrollTo({ top: tableScroll.scrollHeight, behavior: "smooth" });
+  });
+
+  resetBtn.addEventListener("click", () => {
+    claimedUpTo = -1;
+    render();
+    saveState();
+  });
+
+  const tableShell = document.querySelector(".table-shell");
+  let pulseTimeout = null;
+
+  function flashUpdated(){
+    tableShell.classList.remove("pulse");
+    // force reflow so the animation can retrigger on consecutive clicks
+    void tableShell.offsetWidth;
+    tableShell.classList.add("pulse");
+    clearTimeout(pulseTimeout);
+    pulseTimeout = setTimeout(() => tableShell.classList.remove("pulse"), 650);
+
+    const originalLabel = "Apply";
+    applyBtn.textContent = "Applied ✓";
+    applyBtn.disabled = true;
+    setTimeout(() => {
+      applyBtn.textContent = originalLabel;
+      applyBtn.disabled = false;
+    }, 900);
+  }
+
+  applyBtn.addEventListener("click", () => {
+    const initial = parseFloat(initialInput.value);
+    const rate = parseFloat(rateInput.value);
+    const years = parseInt(yearsInput.value, 10);
+
+    if(isNaN(initial) || initial < 0 || isNaN(rate) || rate < 0 || isNaN(years) || years < 1){
+      statusEl.innerHTML = "Please enter a valid amount, rate, and number of years.";
+      return;
+    }
+
+    settings = { initial, rate, years };
+    data = buildSchedule(initial, rate, years);
+    updateFinalBalance();
+    claimedUpTo = -1; // schedule changed, so past claims no longer map to the same rows
+    render();
+    saveSettings();
+    saveState();
+    flashUpdated();
+  });
+
+  loadState();
+</script>
+
+</body>
+</html>
